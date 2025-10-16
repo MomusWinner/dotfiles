@@ -3,7 +3,7 @@ if status is-interactive
 end
 
 alias vi="nvim"
-alias viedit="nvim ~/dotfiles/.config/nvim/lua/plugins/"
+alias viedit="nvim ~/dotfiles/.config/nvim/init.lua"
 
 set --universal pure_color_primary "B8BB26"
 
