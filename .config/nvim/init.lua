@@ -19,6 +19,9 @@ vim.o.signcolumn = "yes"
 vim.o.updatetime = 250
 vim.o.timeoutlen = 300
 
+vim.o.tabstop = 2
+vim.o.shiftwidth = 2
+
 vim.o.splitright = true
 vim.o.splitbelow = true
 
@@ -34,6 +37,8 @@ vim.keymap.set({ "i" }, "jk", "<Esc>")
 vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
 vim.keymap.set("n", "<leader>q", vim.diagnostic.setloclist, { desc = "Open diagnostic [Q]uickfix list" })
 vim.keymap.set("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
+
+vim.keymap.set("n", "gp", "<CMD>b#<CR>", { desc = "Go to previouse buffer" })
 
 vim.keymap.set("n", "<C-h>", "<C-w><C-h>", { desc = "Move focus to the left window" })
 vim.keymap.set("n", "<C-l>", "<C-w><C-l>", { desc = "Move focus to the right window" })
@@ -69,20 +74,6 @@ local rtp = vim.opt.rtp
 rtp:prepend(lazypath)
 
 require("lazy").setup({
-	"NMAC427/guess-indent.nvim", -- Detect tabstop and shiftwidth automatically
-	{
-		"lewis6991/gitsigns.nvim",
-		opts = {
-			signs = {
-				add = { text = "+" },
-				change = { text = "~" },
-				delete = { text = "_" },
-				topdelete = { text = "‾" },
-				changedelete = { text = "~" },
-			},
-		},
-	},
-
 	{ -- Fuzzy Finder (files, lsp, etc)
 		"nvim-telescope/telescope.nvim",
 		event = "VimEnter",
@@ -163,6 +154,34 @@ require("lazy").setup({
 			},
 		},
 	},
+
+	{ -- Highlight, edit, and navigate code
+		"nvim-treesitter/nvim-treesitter",
+		build = ":TSUpdate",
+		main = "nvim-treesitter.configs", -- Sets main module to use for opts
+		opts = {
+			ensure_installed = {
+				"bash",
+				"c",
+				"diff",
+				"html",
+				"lua",
+				"luadoc",
+				"markdown",
+				"markdown_inline",
+				"query",
+				"vim",
+				"vimdoc",
+			},
+			auto_install = true,
+			highlight = {
+				enable = true,
+				additional_vim_regex_highlighting = { "ruby" },
+			},
+			indent = { enable = true, disable = { "ruby" } },
+		},
+	},
+
 	{
 		-- Main LSP Configuration
 		"neovim/nvim-lspconfig",
@@ -347,6 +366,7 @@ require("lazy").setup({
 			end,
 			formatters_by_ft = {
 				lua = { "stylua" },
+				typescript = { "prettier" },
 			},
 		},
 	},
@@ -415,94 +435,30 @@ require("lazy").setup({
 	},
 
 	{
-		"ellisonleao/gruvbox.nvim",
-		priority = 1000, -- Make sure to load this before all the other start plugins.
-		config = function()
-			---@diagnostic disable-next-line: missing-fields
-			vim.cmd.colorscheme("gruvbox")
-		end,
-		opts = {
-			terminal_colors = true, -- add neovim terminal colors
-			undercurl = true,
-			underline = true,
-			bold = true,
-			italic = {
-				strings = true,
-				emphasis = true,
-				comments = true,
-				operators = false,
-				folds = true,
-			},
-			strikethrough = true,
-			invert_selection = false,
-			invert_signs = false,
-			invert_tabline = false,
-			inverse = true, -- invert background for search, diffs, statuslines and errors
-			contrast = "", -- can be "hard", "soft" or empty string
-			palette_overrides = {},
-			overrides = {},
-			dim_inactive = false,
-			transparent_mode = false,
+		"NeogitOrg/neogit",
+		dependencies = {
+			"nvim-lua/plenary.nvim",
+			"sindrets/diffview.nvim",
+			"echasnovski/mini.pick",
 		},
 	},
 
-	-- Highlight todo, notes, etc in comments
 	{
-		"folke/todo-comments.nvim",
-		event = "VimEnter",
-		dependencies = { "nvim-lua/plenary.nvim" },
-		opts = { signs = false },
+		"mistweaverco/kulala.nvim",
+		keys = {
+			{ "<leader>rs", desc = "Send request" },
+			{ "<leader>ra", desc = "Send all requests" },
+			{ "<leader>rb", desc = "Open scratchpad" },
+		},
+		ft = { "http", "rest" },
+		opts = {
+			global_keymaps = true,
+			global_keymaps_prefix = "<leader>r",
+			kulala_keymaps_prefix = "",
+			lsp = { formatter = false },
+		},
 	},
 
-	{ -- Collection of various small independent plugins/modules
-		"echasnovski/mini.nvim",
-		config = function()
-			require("mini.ai").setup({ n_lines = 500 })
-			require("mini.surround").setup()
-		end,
-	},
-	-- {
-	-- 	"stevearc/oil.nvim",
-	-- 	---@module 'oil'
-	-- 	---@type oil.SetupOpts
-	-- 	opts = {
-	-- 		default_file_explorer = true,
-	-- 		columns = {
-	-- 			"icon",
-	-- 		},
-	-- 		keymaps = {
-	-- 			["gd"] = function()
-	-- 				if vim.g.oil_columns then
-	-- 					require("oil").set_columns({ "icon" })
-	-- 					vim.g.oil_columns = false
-	-- 				else
-	-- 					require("oil").set_columns({ "icon", "permissions", "size", "mtime" })
-	-- 					vim.g.oil_columns = true
-	-- 				end
-	-- 			end,
-	-- 			["<CR>"] = "actions.select",
-	-- 			["<C-s>"] = false,
-	-- 			["<C-h>"] = false,
-	-- 			["<C-t>"] = false,
-	-- 			["<C-p>"] = "actions.preview",
-	-- 			["<C-c>"] = { "actions.close", mode = "n" },
-	-- 			["<C-l>"] = "actions.refresh",
-	-- 			["-"] = { "actions.parent", mode = "n" },
-	-- 			["gs"] = { "actions.change_sort", mode = "n" },
-	-- 			["gx"] = "actions.open_external",
-	-- 			["g."] = { "actions.toggle_hidden", mode = "n" },
-	-- 		},
-	-- 		view_options = {
-	-- 			show_hidden = true,
-	-- 		},
-	-- 		preview_win = {
-	-- 			update_on_cursor_moved = true,
-	-- 			preview_method = "fast_scratch",
-	-- 			win_options = {},
-	-- 		},
-	-- 		dependencies = { { "echasnovski/mini.icons", opts = {} } },
-	-- 		-- lazy = false,
-	-- 	},
 	{
 		"stevearc/oil.nvim",
 		tag = "v2.8.0",
@@ -542,6 +498,7 @@ require("lazy").setup({
 			})
 		end,
 	},
+
 	{
 		"nvim-lualine/lualine.nvim",
 		dependencies = { "nvim-tree/nvim-web-devicons" },
@@ -600,59 +557,39 @@ require("lazy").setup({
 			extensions = {},
 		},
 	},
+
 	{
-		"NeogitOrg/neogit",
-		dependencies = {
-			"nvim-lua/plenary.nvim",
-			"sindrets/diffview.nvim",
-			"echasnovski/mini.pick",
-		},
-	},
-	{ -- Highlight, edit, and navigate code
-		"nvim-treesitter/nvim-treesitter",
-		build = ":TSUpdate",
-		main = "nvim-treesitter.configs", -- Sets main module to use for opts
+		"ellisonleao/gruvbox.nvim",
+		priority = 1000, -- Make sure to load this before all the other start plugins.
+		config = function()
+			---@diagnostic disable-next-line: missing-fields
+			vim.cmd.colorscheme("gruvbox")
+		end,
 		opts = {
-			ensure_installed = {
-				"bash",
-				"c",
-				"diff",
-				"html",
-				"lua",
-				"luadoc",
-				"markdown",
-				"markdown_inline",
-				"query",
-				"vim",
-				"vimdoc",
+			terminal_colors = true, -- add neovim terminal colors
+			undercurl = true,
+			underline = true,
+			bold = true,
+			italic = {
+				strings = true,
+				emphasis = true,
+				comments = true,
+				operators = false,
+				folds = true,
 			},
-			auto_install = true,
-			highlight = {
-				enable = true,
-				additional_vim_regex_highlighting = { "ruby" },
-			},
-			indent = { enable = true, disable = { "ruby" } },
+			strikethrough = true,
+			invert_selection = false,
+			invert_signs = false,
+			invert_tabline = false,
+			inverse = true, -- invert background for search, diffs, statuslines and errors
+			contrast = "", -- can be "hard", "soft" or empty string
+			palette_overrides = {},
+			overrides = {},
+			dim_inactive = false,
+			transparent_mode = false,
 		},
 	},
-	{
-		"windwp/nvim-autopairs",
-		event = "InsertEnter",
-		opts = {},
-	},
-	{
-		"mistweaverco/kulala.nvim",
-		keys = {
-			{ "<leader>Rs", desc = "Send request" },
-			{ "<leader>Ra", desc = "Send all requests" },
-			{ "<leader>Rb", desc = "Open scratchpad" },
-		},
-		ft = { "http", "rest" },
-		opts = {
-			global_keymaps = false,
-			global_keymaps_prefix = "<leader>R",
-			kulala_keymaps_prefix = "",
-		},
-	},
+
 	{
 		"OXY2DEV/markview.nvim",
 		lazy = false,
@@ -662,6 +599,43 @@ require("lazy").setup({
 		dependencies = {
 			"saghen/blink.cmp",
 		},
+	},
+
+	{
+		"windwp/nvim-autopairs",
+		event = "InsertEnter",
+		opts = {},
+	},
+
+	"NMAC427/guess-indent.nvim", -- Detect tabstop and shiftwidth automatically
+
+	{
+		"lewis6991/gitsigns.nvim",
+		opts = {
+			signs = {
+				add = { text = "+" },
+				change = { text = "~" },
+				delete = { text = "_" },
+				topdelete = { text = "‾" },
+				changedelete = { text = "~" },
+			},
+		},
+	},
+
+	-- Highlight todo, notes, etc in comments
+	{
+		"folke/todo-comments.nvim",
+		event = "VimEnter",
+		dependencies = { "nvim-lua/plenary.nvim" },
+		opts = { signs = false },
+	},
+
+	{ -- Collection of various small independent plugins/modules
+		"echasnovski/mini.nvim",
+		config = function()
+			require("mini.ai").setup({ n_lines = 500 })
+			require("mini.surround").setup()
+		end,
 	},
 }, {
 	ui = {
