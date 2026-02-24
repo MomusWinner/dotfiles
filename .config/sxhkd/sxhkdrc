@@ -25,10 +25,12 @@ super + alt + {q,r}
 ############
 
 super + p
-    scrot 'screenshot_%Y%m%d_%H%M%S.png' -e 'mkdir -p ~/screenshots && mv $f ~/screenshots && xclip -selection clipboard -t image/png -i ~/screenshots/`ls -1 -t ~/screenshots | head -1`'
+	scrot ~/screenshots/screenshot_%Y%m%d_%H%M%S.png -e 'xclip -selection clipboard -t image/png -i $f && dragon-drop $f'
 
-super + Shift + p
-    scrot -s 'screenshot_%Y%m%d_%H%M%S.png' -e 'mkdir -p ~/screenshots && mv $f ~/screenshots && xclip -selection clipboard -t image/png -i ~/screenshots/`ls -1 -t ~/screenshots | head -1`'
+# super + Shift + p
+#     scrot 'screenshot_%Y%m%d_%H%M%S.png' -e 'mkdir -p ~/screenshots && mv $f ~/screenshots && xclip -selection clipboard -t image/png -i ~/screenshots/`ls -1 -t ~/screenshots | head -1`'
+#
+    # scrot 'temp.png' -e 'mkdir -p ~/screenshots && mv $f ~/screenshots && xclip -selection clipboard -t image/png -i ~/screenshots/`ls -1 -t ~/screenshots | head -1`' && dragon-drop ~/screenshots/temp.png
 
 ##################
 # WINDOW MANAGMENT

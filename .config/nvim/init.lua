@@ -33,12 +33,17 @@ vim.o.cursorline = true
 vim.o.scrolloff = 10
 vim.o.confirm = false
 
+vim.keymap.set("n", "gp", "<CMD>b#<CR>", { desc = "Go to previouse buffer" })
+
+-- Window
+vim.keymap.set("n", "<leader>wc", "<C-W>c", { desc = "Close Window" })
+vim.keymap.set("n", "<leader>w-", "<C-W>s", { desc = "Split Window Below" })
+vim.keymap.set("n", "<leader>w|", "<C-W>v", { desc = "Split Window Right" })
+
 vim.keymap.set({ "i" }, "jk", "<Esc>")
-vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
+vim.keymap.set("n", "<Esc>", "<CMD>nohlsearch<CR>")
 vim.keymap.set("n", "<leader>q", vim.diagnostic.setloclist, { desc = "Open diagnostic [Q]uickfix list" })
 vim.keymap.set("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
-
-vim.keymap.set("n", "gp", "<CMD>b#<CR>", { desc = "Go to previouse buffer" })
 
 vim.keymap.set("n", "<C-h>", "<C-w><C-h>", { desc = "Move focus to the left window" })
 vim.keymap.set("n", "<C-l>", "<C-w><C-l>", { desc = "Move focus to the right window" })
@@ -301,6 +306,7 @@ require("lazy").setup({
 				clangd = {},
 				gopls = {},
 				ols = {},
+				pyrefly = {},
 				ts_ls = {},
 
 				lua_ls = {
@@ -367,6 +373,7 @@ require("lazy").setup({
 			formatters_by_ft = {
 				lua = { "stylua" },
 				typescript = { "prettier" },
+				python = { "black" },
 			},
 		},
 	},
@@ -432,6 +439,203 @@ require("lazy").setup({
 
 			signature = { enabled = true },
 		},
+	},
+
+	{ -- Debugger
+		"mfussenegger/nvim-dap",
+		dependencies = {
+			-- Creates a beautiful debugger UI
+			"rcarriga/nvim-dap-ui",
+
+			-- Required dependency for nvim-dap-ui
+			"nvim-neotest/nvim-nio",
+
+			-- Installs the debug adapters for you
+			"mason-org/mason.nvim",
+			"jay-babu/mason-nvim-dap.nvim",
+
+			-- Add your own debuggers here
+			"leoluz/nvim-dap-go",
+			"julianolf/nvim-dap-lldb",
+		},
+		keys = {
+			{
+				"<F5>",
+				function()
+					require("dap").continue()
+				end,
+				desc = "Debug: Start/Continue",
+			},
+			{
+				"<F1>",
+				function()
+					require("dap").step_into()
+				end,
+				desc = "Debug: Step Into",
+			},
+			{
+				"<F2>",
+				function()
+					require("dap").step_over()
+				end,
+				desc = "Debug: Step Over",
+			},
+			{
+				"<F3>",
+				function()
+					require("dap").step_out()
+				end,
+				desc = "Debug: Step Out",
+			},
+			{
+				"<leader>b",
+				function()
+					require("dap").toggle_breakpoint()
+				end,
+				desc = "Debug: Toggle Breakpoint",
+			},
+			{
+				"<leader>B",
+				function()
+					require("dap").set_breakpoint(vim.fn.input("Breakpoint condition: "))
+				end,
+				desc = "Debug: Set Breakpoint",
+			},
+			-- Toggle to see last session result. Without this, you can't see session output in case of unhandled exception.
+			{
+				"<F7>",
+				function()
+					require("dapui").toggle()
+				end,
+				desc = "Debug: See last session result.",
+			},
+		},
+		config = function()
+			local dap = require("dap")
+			local dapui = require("dapui")
+
+			require("mason-nvim-dap").setup({
+				-- Makes a best effort to setup the various debuggers with
+				-- reasonable debug configurations
+				automatic_installation = true,
+
+				-- You can provide additional configuration to the handlers,
+				-- see mason-nvim-dap README for more information
+				handlers = {},
+
+				-- You'll need to check that you have the required things installed
+				-- online, please don't ask me how to install them :)
+				ensure_installed = {
+					-- Update this to ensure that you have the debuggers for the langs you want
+					"delve",
+				},
+			})
+
+			-- Dap UI setup
+			-- For more information, see |:help nvim-dap-ui|
+			dapui.setup({
+				-- Set icons to characters that are more likely to work in every terminal.
+				--    Feel free to remove or use ones that you like more! :)
+				--    Don't feel like these are good choices.
+				icons = { expanded = "▾", collapsed = "▸", current_frame = "*" },
+				controls = {
+					icons = {
+						pause = "⏸",
+						play = "▶",
+						step_into = "⏎",
+						step_over = "⏭",
+						step_out = "⏮",
+						step_back = "b",
+						run_last = "▶▶",
+						terminate = "⏹",
+						disconnect = "⏏",
+					},
+				},
+			})
+
+			-- Change breakpoint icons
+			-- vim.api.nvim_set_hl(0, 'DapBreak', { fg = '#e51400' })
+			-- vim.api.nvim_set_hl(0, 'DapStop', { fg = '#ffcc00' })
+			-- local breakpoint_icons = vim.g.have_nerd_font
+			--     and { Breakpoint = '', BreakpointCondition = '', BreakpointRejected = '', LogPoint = '', Stopped = '' }
+			--   or { Breakpoint = '●', BreakpointCondition = '⊜', BreakpointRejected = '⊘', LogPoint = '◆', Stopped = '⭔' }
+			-- for type, icon in pairs(breakpoint_icons) do
+			--   local tp = 'Dap' .. type
+			--   local hl = (type == 'Stopped') and 'DapStop' or 'DapBreak'
+			--   vim.fn.sign_define(tp, { text = icon, texthl = hl, numhl = hl })
+			-- end
+
+			dap.listeners.after.event_initialized["dapui_config"] = dapui.open
+			dap.listeners.before.event_terminated["dapui_config"] = dapui.close
+			dap.listeners.before.event_exited["dapui_config"] = dapui.close
+
+			-- Install golang specific config
+			require("dap-go").setup({
+				delve = {
+					-- On Windows delve must be run attached or it crashes.
+					-- See https://github.com/leoluz/nvim-dap-go/blob/main/README.md#configuring
+					detached = vim.fn.has("win32") == 0,
+				},
+			})
+
+			local cfg = {
+				configurations = {
+					cpp = {
+						{
+							name = "Launch debugger build/*",
+							type = "lldb",
+							request = "launch",
+							cwd = "${workspaceFolder}",
+							stopOnEntry = false,
+							program = function()
+								local debug_path = string.format("%s/build/*", vim.fn.getcwd())
+								local paths = vim.split(vim.fn.glob(debug_path), "\n")
+								return paths[1]
+							end,
+						},
+						{
+							name = "Launch debugger",
+							type = "lldb",
+							request = "launch",
+							cwd = "${workspaceFolder}",
+							stopOnEntry = false,
+							program = function()
+								-- local cwd = string.format("%s%s", vim.fn.getcwd(), sep)
+								local cwd = vim.fn.getcwd()
+								return vim.fn.input("Path to executable: ", cwd, "file")
+							end,
+						},
+					},
+					odin = {
+						{
+							name = "Launch debugger bin/debug/*",
+							type = "lldb",
+							request = "launch",
+							cwd = "${workspaceFolder}",
+							stopOnEntry = false,
+							program = function()
+								local debug_path = string.format("%s/bin/debug/*", vim.fn.getcwd())
+								local paths = vim.split(vim.fn.glob(debug_path), "\n")
+								return paths[1]
+							end,
+						},
+						{
+							name = "Launch debugger",
+							type = "lldb",
+							request = "launch",
+							cwd = "${workspaceFolder}",
+							stopOnEntry = false,
+							program = function()
+								-- local cwd = string.format("%s%s", vim.fn.getcwd(), sep)
+								local cwd = vim.fn.getcwd()
+								return vim.fn.input("Path to executable: ", cwd, "file")
+							end,
+						},
+					},
+				},
+			}
+			require("dap-lldb").setup(cfg)
+		end,
 	},
 
 	{
@@ -559,36 +763,50 @@ require("lazy").setup({
 	},
 
 	{
-		"ellisonleao/gruvbox.nvim",
-		priority = 1000, -- Make sure to load this before all the other start plugins.
+		"sainnhe/gruvbox-material",
+		lazy = false,
+		priority = 1000,
 		config = function()
-			---@diagnostic disable-next-line: missing-fields
-			vim.cmd.colorscheme("gruvbox")
+			vim.g.gruvbox_material_background = "hard" -- Варианты: 'hard', 'medium', 'soft'
+			-- vim.g.gruvbox_material_foreground = 'material' -- Варианты: 'original', 'mix', 'material'
+			-- vim.g.gruvbox_material_enable_bold = 1
+			-- vim.g.gruvbox_material_enable_italic = 1
+
+			vim.cmd.colorscheme("gruvbox-material")
 		end,
-		opts = {
-			terminal_colors = true, -- add neovim terminal colors
-			undercurl = true,
-			underline = true,
-			bold = true,
-			italic = {
-				strings = true,
-				emphasis = true,
-				comments = true,
-				operators = false,
-				folds = true,
-			},
-			strikethrough = true,
-			invert_selection = false,
-			invert_signs = false,
-			invert_tabline = false,
-			inverse = true, -- invert background for search, diffs, statuslines and errors
-			contrast = "", -- can be "hard", "soft" or empty string
-			palette_overrides = {},
-			overrides = {},
-			dim_inactive = false,
-			transparent_mode = false,
-		},
 	},
+
+	-- {
+	-- 	"ellisonleao/gruvbox.nvim",
+	-- 	priority = 1000, -- Make sure to load this before all the other start plugins.
+	-- 	config = function()
+	-- 		---@diagnostic disable-next-line: missing-fields
+	-- 		vim.cmd.colorscheme("gruvbox")
+	-- 	end,
+	-- 	opts = {
+	-- 		terminal_colors = true, -- add neovim terminal colors
+	-- 		undercurl = true,
+	-- 		underline = true,
+	-- 		bold = true,
+	-- 		italic = {
+	-- 			strings = true,
+	-- 			emphasis = true,
+	-- 			comments = true,
+	-- 			operators = false,
+	-- 			folds = true,
+	-- 		},
+	-- 		strikethrough = true,
+	-- 		invert_selection = false,
+	-- 		invert_signs = false,
+	-- 		invert_tabline = false,
+	-- 		inverse = true, -- invert background for search, diffs, statuslines and errors
+	-- 		contrast = "", -- can be "hard", "soft" or empty string
+	-- 		palette_overrides = {},
+	-- 		overrides = {},
+	-- 		dim_inactive = false,
+	-- 		transparent_mode = false,
+	-- 	},
+	-- },
 
 	{
 		"OXY2DEV/markview.nvim",
@@ -599,6 +817,16 @@ require("lazy").setup({
 		dependencies = {
 			"saghen/blink.cmp",
 		},
+
+		config = function()
+			local presets = require("markview.presets").headings
+
+			require("markview").setup({
+				markdown = {
+					headings = presets.simple,
+				},
+			})
+		end,
 	},
 
 	{
