@@ -645,6 +645,10 @@ require("lazy").setup({
 			"sindrets/diffview.nvim",
 			"echasnovski/mini.pick",
 		},
+		cmd = "Neogit",
+		keys = {
+			{ "<leader>gg", "<cmd>Neogit<cr>", desc = "Show Neogit UI" },
+		},
 	},
 
 	{
