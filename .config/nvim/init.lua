@@ -6,9 +6,15 @@ vim.o.number = true
 vim.o.mouse = "a"
 vim.o.showmode = false
 
+vim.o.spelllang = "en_us,ru"
+vim.o.spell = true
+
 vim.schedule(function()
 	vim.o.clipboard = "unnamedplus"
 end)
+
+vim.o.wrap = true
+vim.o.linebreak = true
 
 vim.o.breakindent = true
 vim.o.undofile = true
@@ -56,6 +62,8 @@ vim.keymap.set("n", "<C-S-j>", "<C-w>J", { desc = "Move window to the lower" })
 vim.keymap.set("n", "<C-S-k>", "<C-w>K", { desc = "Move window to the upper" })
 
 vim.keymap.set("n", "-", "<CMD>Oil<CR>", { desc = "[O]pen oil" })
+
+vim.keymap.set("n", "<leader>lr", "<CMD>set keymap=russian-jcuken<CR>", { desc = "Russian" })
 
 vim.api.nvim_create_autocmd("TextYankPost", {
 	desc = "Highlight when yanking (copying) text",
@@ -303,6 +311,7 @@ require("lazy").setup({
 			local capabilities = require("blink.cmp").get_lsp_capabilities()
 
 			local servers = {
+				tinymist = {},
 				clangd = {},
 				gopls = {},
 				ols = {},
@@ -775,6 +784,14 @@ require("lazy").setup({
 			vim.g.gruvbox_material_enable_italic = true
 			vim.cmd.colorscheme("gruvbox-material")
 		end,
+	},
+	{
+		"chomosuke/typst-preview.nvim",
+		lazy = false,
+		version = "1.*",
+		opts = {
+			dependencies_bin = { tinymist = "tinymist" },
+		},
 	},
 
 	-- {
