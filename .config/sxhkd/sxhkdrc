@@ -6,7 +6,7 @@ super + Return
 	kitty
 
 super + w
-	firefox
+	zen-browser
 
 super + d
 	rofi -show-icons -show drun
@@ -39,6 +39,9 @@ super + p
 # close and kill
 super + q
 	bspc node -{c,k}
+
+super + shift + q
+	bspc node -c
 
 # alternate between the tiled and monocle layout
 super + m
