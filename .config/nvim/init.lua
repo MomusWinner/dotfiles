@@ -170,10 +170,12 @@ require("lazy").setup({
 
 	{ -- Highlight, edit, and navigate code
 		"nvim-treesitter/nvim-treesitter",
+		branch = "main",
+		lazy = false,
 		build = ":TSUpdate",
-		main = "nvim-treesitter.configs", -- Sets main module to use for opts
-		opts = {
-			ensure_installed = {
+		config = function()
+			local ts = require("nvim-treesitter")
+			ts.install({
 				"bash",
 				"c",
 				"diff",
@@ -185,14 +187,38 @@ require("lazy").setup({
 				"query",
 				"vim",
 				"vimdoc",
-			},
-			auto_install = true,
-			highlight = {
-				enable = true,
-				additional_vim_regex_highlighting = { "ruby" },
-			},
-			indent = { enable = true, disable = { "ruby" } },
-		},
+			})
+
+			local function attach(buf, lang)
+				if not vim.treesitter.language.add(lang) then
+					return
+				end
+				vim.treesitter.start(buf, lang)
+				vim.bo[buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+			end
+
+			local available = ts.get_available()
+			vim.api.nvim_create_autocmd("FileType", {
+				callback = function(args)
+					local lang = vim.treesitter.language.get_lang(args.match)
+					if not lang then
+						return
+					end
+					if
+						vim.tbl_contains(available, lang)
+						and not vim.tbl_contains(ts.get_installed("parsers"), lang)
+					then
+						ts.install(lang):await(vim.schedule_wrap(function()
+							if vim.api.nvim_buf_is_valid(args.buf) then
+								attach(args.buf, lang)
+							end
+						end))
+					else
+						attach(args.buf, lang)
+					end
+				end,
+			})
+		end,
 	},
 
 	{
@@ -314,6 +340,7 @@ require("lazy").setup({
 				tinymist = {},
 				clangd = {},
 				gopls = {},
+				jdtls = {},
 				ols = {},
 				pyrefly = {},
 				ts_ls = {},
